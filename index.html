@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#1a3a5c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="申し送り">
+<title>申し送りシステム｜プロラボ加古川校</title>
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ログイン -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <span class="login-logo-icon">📋</span>
+      <div>
+        <div class="login-title">申し送りシステム</div>
+        <div class="login-sub">プロラボ加古川校</div>
+      </div>
+    </div>
+    <div class="field">
+      <label>スタッフ名</label>
+      <select id="login-name"><option value="">選択してください</option></select>
+    </div>
+    <div class="field">
+      <label>パスワード</label>
+      <input type="password" id="login-pass" placeholder="パスワードを入力">
+    </div>
+    <div class="error-msg" id="login-error"></div>
+    <button class="login-btn" onclick="doLogin()">ログイン</button>
+    <div class="login-note" id="login-note"></div>
+  </div>
+</div>
+
+<!-- メイン -->
+<div id="main-screen" class="hidden">
+  <div class="header">
+    <div>
+      <div class="header-title">申し送り記録</div>
+      <div class="header-sub" id="main-date-label"></div>
+    </div>
+    <div class="header-right">
+      <span class="staff-badge" id="main-staff-name"></span>
+      <button class="icon-btn" onclick="openHistory()">📂 履歴</button>
+      <button class="icon-btn icon-btn-admin hidden" id="admin-btn" onclick="openAdmin()">⚙️ 設定</button>
+      <button class="icon-btn" onclick="doLogout()">ログアウト</button>
+    </div>
+  </div>
+  <div class="card-list" id="card-list"></div>
+  <div class="save-bar">
+    <button class="save-btn" id="save-btn" onclick="saveRecords()">💾 保存する</button>
+  </div>
+</div>
+
+<!-- 履歴 -->
+<div id="history-screen" class="hidden">
+  <div class="header">
+    <div class="header-title">📂 過去の記録</div>
+    <button class="icon-btn" onclick="showScreen('main')">← 戻る</button>
+  </div>
+  <div class="card-list" id="history-list"></div>
+</div>
+
+<!-- 詳細 -->
+<div id="detail-screen" class="hidden">
+  <div class="header">
+    <div>
+      <div class="header-title">📋 記録詳細</div>
+      <div class="header-sub" id="detail-date-label"></div>
+    </div>
+    <button class="icon-btn" onclick="showScreen('history')">← 戻る</button>
+  </div>
+  <div class="card-list" id="detail-list"></div>
+</div>
+
+<!-- 管理者設定 -->
+<div id="admin-screen" class="hidden">
+  <div class="header">
+    <div class="header-title">⚙️ 管理者設定</div>
+    <button class="icon-btn" onclick="showScreen('main')">← 戻る</button>
+  </div>
+  <div class="card-list" id="admin-content"></div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

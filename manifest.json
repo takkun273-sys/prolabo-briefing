@@ -1,0 +1,22 @@
+{
+  "name": "申し送りシステム｜プロラボ加古川校",
+  "short_name": "申し送り",
+  "description": "プロラボ加古川校 申し送り記録アプリ",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f0f4f8",
+  "theme_color": "#1a3a5c",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
