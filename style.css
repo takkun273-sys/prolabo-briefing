@@ -183,3 +183,59 @@ textarea {
 
 /* ======== ユーティリティ ======== */
 .hidden { display: none !important; }
+
+/* ======== 印刷ボタン ======== */
+.print-btn {
+  background: rgba(255,255,255,0.2); border: none; color: #fff;
+  border-radius: 20px; padding: 5px 11px; cursor: pointer; font-size: 12px;
+  font-family: 'Noto Sans JP', sans-serif; white-space: nowrap;
+}
+
+/* ======== 印刷用スタイル ======== */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm 10mm;
+  }
+
+  body * { visibility: hidden; }
+  #print-area, #print-area * { visibility: visible; }
+  #print-area {
+    position: absolute; top: 0; left: 0;
+    width: 100%; font-family: 'Noto Sans JP', sans-serif;
+  }
+
+  .print-header {
+    text-align: center; margin-bottom: 10px;
+    border-bottom: 2px solid #1a3a5c; padding-bottom: 6px;
+  }
+  .print-header h1 { font-size: 16pt; font-weight: 700; color: #1a3a5c; }
+  .print-header p  { font-size: 10pt; color: #555; margin-top: 2px; }
+
+  .print-table {
+    width: 100%; border-collapse: collapse; font-size: 9pt;
+    table-layout: fixed;
+  }
+  .print-table th {
+    background: #1a3a5c; color: #fff;
+    border: 1px solid #aaa; padding: 5px 4px;
+    text-align: center; font-weight: 700;
+    word-break: break-all;
+  }
+  .print-table td {
+    border: 1px solid #ccc; padding: 5px 4px;
+    vertical-align: top; word-break: break-all; line-height: 1.5;
+  }
+  .print-table tr:nth-child(even) td { background: #f9f9f9; }
+
+  .print-child-name { font-weight: 700; font-size: 10pt; }
+  .print-check-list { font-size: 8pt; color: #e74c3c; font-weight: 600; }
+  .print-log-entry { margin-bottom: 3px; font-size: 8.5pt; }
+  .print-log-meta  { color: #888; font-size: 7.5pt; }
+  .print-none      { color: #bbb; font-size: 8pt; }
+
+  .print-footer {
+    margin-top: 10px; font-size: 8pt; color: #888;
+    text-align: right; border-top: 1px solid #ccc; padding-top: 4px;
+  }
+}

@@ -291,6 +291,7 @@ function openHistory(){
 }
 
 function openDetail(date){
+  currentDetailDate = date;
   document.getElementById('detail-date-label').textContent = formatDate(date);
   const recs = loadData(date) || [];
   const list = document.getElementById('detail-list');
@@ -397,6 +398,57 @@ function saveAdminSettings(){
   const btn = document.querySelector('.admin-save-btn');
   btn.textContent = '✅ 保存しました！';
   setTimeout(() => { btn.textContent = '💾 設定を保存する'; }, 2000);
+}
+
+// ======== 印刷 ========
+let currentDetailDate = '';
+
+function printDetail(){
+  const recs = loadData(currentDetailDate) || [];
+  const area = document.getElementById('print-area');
+
+  const colWidths = ['14%','14%','18%','18%','18%','18%'];
+  const headers   = ['児童名','体調チェック','体調・様子','トラブル・対応','保護者連絡事項','翌日申し送り'];
+  const fieldKeys = ['status','trouble','parent','next'];
+
+  const headerCols = headers.map((h,i) =>
+    `<th style="width:${colWidths[i]}">${h}</th>`
+  ).join('');
+
+  const rows = recs.map(rec => {
+    const checksStr = rec.checks.length > 0
+      ? `<div class="print-check-list">▶ ${rec.checks.join('　')}</div>` : '';
+    const fieldCells = fieldKeys.map(key => {
+      const logs = rec.logs && rec.logs[key] || [];
+      if(logs.length === 0) return `<td><span class="print-none">―</span></td>`;
+      const entries = logs.map(l =>
+        `<div class="print-log-entry"><span class="print-log-meta">[${escHtml(l.staff)} ${l.time}]</span> ${escHtml(l.text)}</div>`
+      ).join('');
+      return `<td>${entries}</td>`;
+    }).join('');
+
+    return `<tr>
+      <td><span class="print-child-name">${escHtml(rec.childName)}</span></td>
+      <td>${checksStr || '<span class="print-none">―</span>'}</td>
+      ${fieldCells}
+    </tr>`;
+  }).join('');
+
+  area.innerHTML = `
+    <div class="print-header">
+      <h1>申し送り記録</h1>
+      <p>プロラボ加古川校　${formatDate(currentDetailDate)}</p>
+    </div>
+    <table class="print-table">
+      <thead><tr>${headerCols}</tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="print-footer">印刷日時：${new Date().toLocaleString('ja-JP')}</div>
+  `;
+
+  area.style.display = 'block';
+  window.print();
+  area.style.display = 'none';
 }
 
 // ======== Service Worker登録 ========

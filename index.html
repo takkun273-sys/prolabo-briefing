@@ -74,10 +74,16 @@
       <div class="header-title">📋 記録詳細</div>
       <div class="header-sub" id="detail-date-label"></div>
     </div>
-    <button class="icon-btn" onclick="showScreen('history')">← 戻る</button>
+    <div class="header-right">
+      <button class="print-btn" onclick="printDetail()">🖨️ 印刷</button>
+      <button class="icon-btn" onclick="showScreen('history')">← 戻る</button>
+    </div>
   </div>
   <div class="card-list" id="detail-list"></div>
 </div>
+
+<!-- 印刷専用エリア（画面には非表示） -->
+<div id="print-area" style="display:none"></div>
 
 <!-- 管理者設定 -->
 <div id="admin-screen" class="hidden">
