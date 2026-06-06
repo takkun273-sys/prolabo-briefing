@@ -52,6 +52,26 @@
       <button class="icon-btn" onclick="doLogout()">ログアウト</button>
     </div>
   </div>
+
+  <!-- 全体共有欄 -->
+  <div id="notice-bar">
+    <div class="notice-header" onclick="toggleNotice()">
+      <span>📢 全体共有欄</span>
+      <span id="notice-arrow">▼</span>
+    </div>
+    <div class="notice-body hidden" id="notice-body">
+      <div class="log-box" id="notice-log"></div>
+      <textarea id="notice-input" rows="2" placeholder="全スタッフへの連絡・共有事項を入力"></textarea>
+      <button class="append-btn" onclick="appendNotice()">✏️ 追記する</button>
+    </div>
+  </div>
+
+  <!-- 引継ぎ完了フラグ -->
+  <div id="handover-bar">
+    <div class="handover-status" id="handover-status"></div>
+    <button class="handover-btn" id="handover-btn" onclick="toggleHandover()"></button>
+  </div>
+
   <div class="card-list" id="card-list"></div>
   <div class="save-bar">
     <button class="save-btn" id="save-btn" onclick="saveRecords()">💾 保存する</button>
@@ -82,9 +102,6 @@
   <div class="card-list" id="detail-list"></div>
 </div>
 
-<!-- 印刷専用エリア（画面には非表示） -->
-<div id="print-area" style="display:none"></div>
-
 <!-- 管理者設定 -->
 <div id="admin-screen" class="hidden">
   <div class="header">
@@ -93,6 +110,24 @@
   </div>
   <div class="card-list" id="admin-content"></div>
 </div>
+
+<!-- 月次まとめ -->
+<div id="monthly-screen" class="hidden">
+  <div class="header">
+    <div>
+      <div class="header-title">📊 月次まとめ</div>
+      <div class="header-sub" id="monthly-label"></div>
+    </div>
+    <div class="header-right">
+      <button class="print-btn" onclick="printMonthly()">🖨️ 印刷</button>
+      <button class="icon-btn" onclick="showScreen('history')">← 戻る</button>
+    </div>
+  </div>
+  <div class="card-list" id="monthly-list"></div>
+</div>
+
+<!-- 印刷専用エリア -->
+<div id="print-area" style="display:none"></div>
 
 <script src="app.js"></script>
 </body>
