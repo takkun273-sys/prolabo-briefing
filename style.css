@@ -289,6 +289,18 @@ textarea {
   font-family: 'Noto Sans JP', sans-serif; font-weight: 600;
 }
 
+/* ======== 定型文ボタン ======== */
+.preset-row {
+  display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;
+}
+.preset-btn {
+  background: #eaf4ff; border: 1.5px solid #b3d7f0; color: #1a3a5c;
+  border-radius: 20px; padding: 5px 12px; font-size: 12px; cursor: pointer;
+  font-family: 'Noto Sans JP', sans-serif; font-weight: 600;
+  transition: all 0.15s; white-space: nowrap;
+}
+.preset-btn:hover { background: #2980b9; color: #fff; border-color: #2980b9; }
+
 /* ======== ユーティリティ ======== */
 .hidden { display: none !important; }
 
