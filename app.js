@@ -1,3 +1,24 @@
+// ======== GAS連携設定 ========
+// デプロイ後にここを書き換えてください
+const GAS_URL = 'ここにGASのデプロイURLを貼り付け';
+
+async function gasGet(params) {
+  const url = GAS_URL + '?' + new URLSearchParams(params);
+  const res = await fetch(url);
+  return res.json();
+}
+async function gasPost(body) {
+  const res = await fetch(GAS_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify(body),
+  });
+  return res.json();
+}
+function isGasReady() {
+  return GAS_URL && GAS_URL !== 'ここにGASのデプロイURLを貼り付け';
+}
+
 // ======== マスターデータ ========
 const DAYS = ["月","火","水","木","金","土"];
 const DAY_COLORS = {"月":"#3498db","火":"#e67e22","水":"#27ae60","木":"#9b59b6","金":"#e74c3c","土":"#1abc9c"};
@@ -49,13 +70,47 @@ function getChildren(){return JSON.parse(localStorage.getItem('children')||'null
 function saveChildren(o){localStorage.setItem('children',JSON.stringify(o));}
 function getPresets(){return JSON.parse(localStorage.getItem('presets')||'null')||DEFAULT_PRESETS;}
 function savePresets(o){localStorage.setItem('presets',JSON.stringify(o));}
-function loadData(date){try{const r=localStorage.getItem('申し送り_'+date);return r?JSON.parse(r):null;}catch{return null;}}
-function storeData(date,data){localStorage.setItem('申し送り_'+date,JSON.stringify(data));}
-function getSavedDates(){const d=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('申し送り_'))d.push(k.replace('申し送り_',''));}return d.sort().reverse();}
-function getNoticeData(date){try{return JSON.parse(localStorage.getItem('notice_'+date)||'{"msg":[],"visitor":[]}');}catch{return{msg:[],visitor:[]};}}
-function saveNoticeData(date,o){localStorage.setItem('notice_'+date,JSON.stringify(o));}
-function getHandoverData(date){try{return JSON.parse(localStorage.getItem('handover_'+date)||'null');}catch{return null;}}
-function saveHandoverData(date,o){localStorage.setItem('handover_'+date,JSON.stringify(o));}
+function loadData(date){ try{ const r=localStorage.getItem('申し送り_'+date); return r?JSON.parse(r):null; }catch{return null;} }
+function storeData(date,data){ localStorage.setItem('申し送り_'+date,JSON.stringify(data)); }
+function getSavedDates(){ const d=[]; for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i); if(k&&k.startsWith('申し送り_'))d.push(k.replace('申し送り_',''));} return d.sort().reverse(); }
+function getNoticeData(date){ try{ return JSON.parse(localStorage.getItem('notice_'+date)||'{"msg":[],"visitor":[]}'); }catch{return{msg:[],visitor:[]};} }
+function saveNoticeData(date,o){ localStorage.setItem('notice_'+date,JSON.stringify(o)); }
+function getHandoverData(date){ try{ return JSON.parse(localStorage.getItem('handover_'+date)||'null'); }catch{return null;} }
+function saveHandoverData(date,o){ localStorage.setItem('handover_'+date,JSON.stringify(o)); }
+
+// GAS対応：読み込み（GAS優先・ローカル fallback）
+async function loadDataRemote(date){
+  if(!isGasReady()) return loadData(date);
+  try{
+    const r=await gasGet({action:'getRecords',date});
+    if(r.ok&&r.data!==null){ storeData(date,r.data); return r.data; }
+  }catch(e){ console.warn('GAS getRecords失敗、ローカル使用',e); }
+  return loadData(date);
+}
+async function loadNoticeRemote(date){
+  if(!isGasReady()) return getNoticeData(date);
+  try{
+    const r=await gasGet({action:'getNotice',date});
+    if(r.ok){ localStorage.setItem('notice_'+date,JSON.stringify(r.data)); return r.data; }
+  }catch(e){ console.warn('GAS getNotice失敗',e); }
+  return getNoticeData(date);
+}
+async function loadHandoverRemote(date){
+  if(!isGasReady()) return getHandoverData(date);
+  try{
+    const r=await gasGet({action:'getHandover',date});
+    if(r.ok){ localStorage.setItem('handover_'+date,JSON.stringify(r.data)); return r.data; }
+  }catch(e){ console.warn('GAS getHandover失敗',e); }
+  return getHandoverData(date);
+}
+async function getDatesRemote(){
+  if(!isGasReady()) return getSavedDates();
+  try{
+    const r=await gasGet({action:'getDates'});
+    if(r.ok) return r.data;
+  }catch(e){ console.warn('GAS getDates失敗',e); }
+  return getSavedDates();
+}
 
 // ======== 状態 ========
 let currentStaff=null,records=[],adminChildren={},adminStaff=[],adminPresets={};
@@ -88,12 +143,13 @@ document.getElementById('login-pass').addEventListener('keydown',e=>{if(e.key===
 function doLogout(){currentStaff=null;document.getElementById('login-pass').value='';buildLoginUI();showScreen('login');}
 
 // ======== メイン ========
-function initMain(){
+async function initMain(){
   document.getElementById('main-date-label').textContent=formatDate(today)+'　'+todayDay+'曜日';
   document.getElementById('main-staff-name').textContent='👤 '+currentStaff.name;
   document.getElementById('admin-btn').classList.toggle('hidden',!currentStaff.isAdmin);
+  showSyncStatus('読み込み中…');
   const children=getChildren(),todayChildren=children[todayDay]||[];
-  const saved=loadData(today);
+  const saved=await loadDataRemote(today);
   if(saved){
     records=[...saved];
     const savedNames=saved.map(r=>r.childName);
@@ -101,6 +157,11 @@ function initMain(){
   } else {
     records=todayChildren.map(emptyRecord);
   }
+  const noticeData=await loadNoticeRemote(today);
+  localStorage.setItem('notice_'+today,JSON.stringify(noticeData));
+  const handoverData=await loadHandoverRemote(today);
+  localStorage.setItem('handover_'+today,JSON.stringify(handoverData));
+  hideSyncStatus();
   renderNotice();renderHandover();renderCards();
 }
 function emptyRecord(name){
@@ -129,6 +190,7 @@ function appendNotice(type){
   if(!data[type])data[type]=[];
   data[type].push({staff:currentStaff.name,time:nowTime(),text});
   saveNoticeData(today,data);ta.value='';renderNotice();
+  if(isGasReady()) gasPost({action:'saveNotice',date:today,data}).catch(e=>console.warn('notice sync失敗',e));
 }
 
 // ======== 引継ぎフラグ ========
@@ -146,7 +208,9 @@ function renderHandover(){
 }
 function toggleHandover(){
   const data=getHandoverData(today);
-  saveHandoverData(today,data&&data.confirmed?null:{confirmed:true,staff:currentStaff.name,time:nowTime()});
+  const next=data&&data.confirmed?null:{confirmed:true,staff:currentStaff.name,time:nowTime()};
+  saveHandoverData(today,next);
+  if(isGasReady()) gasPost({action:'saveHandover',date:today,data:next}).catch(e=>console.warn('handover sync失敗',e));
   renderHandover();
 }
 
@@ -294,11 +358,25 @@ function toggleCard(idx){
 }
 
 // ======== 保存 ========
-function saveRecords(){
+async function saveRecords(){
   storeData(today,records);
   const btn=document.getElementById('save-btn');
-  btn.textContent='✅ 保存しました！';btn.classList.add('flash');
-  setTimeout(()=>{btn.textContent='💾 保存する';btn.classList.remove('flash');},2000);
+  btn.textContent='保存中…';btn.classList.add('flash');
+  if(isGasReady()){
+    try{
+      await gasPost({action:'saveRecords',date:today,data:records});
+      // 全体共有・引継ぎも同時同期
+      await gasPost({action:'saveNotice',date:today,data:getNoticeData(today)});
+      await gasPost({action:'saveHandover',date:today,data:getHandoverData(today)});
+      btn.textContent='✅ 保存・同期しました！';
+    }catch(e){
+      console.warn('GAS保存失敗',e);
+      btn.textContent='⚠️ ローカルのみ保存';
+    }
+  } else {
+    btn.textContent='✅ 保存しました（ローカル）';
+  }
+  setTimeout(()=>{btn.textContent='💾 保存する';btn.classList.remove('flash');},2500);
 }
 
 // ======== 児童一覧 ========
@@ -409,10 +487,12 @@ function printChildPage(){
 }
 
 // ======== 履歴 ========
-function openHistory(){
+async function openHistory(){
   const list=document.getElementById('history-list');
+  list.innerHTML='<div class="empty-msg">読み込み中…</div>';
+  showScreen('history');
+  const dates=await getDatesRemote();
   list.innerHTML='';
-  const dates=getSavedDates();
   const months=[...new Set(dates.map(d=>d.slice(0,7)))].sort().reverse();
   list.insertAdjacentHTML('afterbegin',`
     <div class="monthly-selector">
@@ -425,7 +505,7 @@ function openHistory(){
   } else {
     dates.forEach(date=>{
       const recs=loadData(date)||[];
-      const alertCount=recs.filter(r=>r.checks.some(c=>['トラブルあり','保護者連絡要','体調不良'].includes(c))).length;
+      const alertCount=recs.filter(r=>r.checks&&r.checks.some(c=>['トラブルあり','保護者連絡要','体調不良'].includes(c))).length;
       const handover=getHandoverData(date);
       const handoverHtml=handover&&handover.confirmed?'<span style="color:#27ae60">✅ 引継確認済</span>':'<span style="color:#e74c3c">⚠ 引継未確認</span>';
       const item=document.createElement('div');
@@ -444,17 +524,34 @@ function openHistory(){
       list.appendChild(item);
     });
   }
-  showScreen('history');
+}
+
+// ======== 同期ステータス表示 ========
+function showSyncStatus(msg){
+  let el=document.getElementById('sync-status');
+  if(!el){
+    el=document.createElement('div');el.id='sync-status';
+    el.style.cssText='position:fixed;top:60px;left:50%;transform:translateX(-50%);background:#1a3a5c;color:#fff;padding:6px 18px;border-radius:20px;font-size:13px;z-index:999;box-shadow:0 2px 8px rgba(0,0,0,0.2)';
+    document.body.appendChild(el);
+  }
+  el.textContent=msg;el.style.display='block';
+}
+function hideSyncStatus(){
+  const el=document.getElementById('sync-status');
+  if(el)el.style.display='none';
 }
 
 // ======== 詳細 ========
-function openDetail(date){
+async function openDetail(date){
   currentDetailDate=date;
   document.getElementById('detail-date-label').textContent=formatDate(date);
-  const recs=loadData(date)||[],list=document.getElementById('detail-list');
+  showScreen('detail');
+  const list=document.getElementById('detail-list');
+  list.innerHTML='<div class="empty-msg">読み込み中…</div>';
+  const recs=await loadDataRemote(date)||[];
+  const notice=await loadNoticeRemote(date);
+  const handover=await loadHandoverRemote(date);
   list.innerHTML='';
-  // 全体共有欄
-  const notice=getNoticeData(date);
   const hasMsgs=(notice.msg||[]).length>0,hasVisitors=(notice.visitor||[]).length>0;
   if(hasMsgs||hasVisitors){
     const nc=document.createElement('div');nc.className='detail-notice';
@@ -463,7 +560,6 @@ function openDetail(date){
     if(hasVisitors)nc.innerHTML+=`<div class="detail-notice-sub">🚪 来客予定</div>`+(notice.visitor||[]).map(l=>`<div class="log-entry"><span class="log-meta">[${escHtml(l.staff)} ${l.time}]</span>${escHtml(l.text)}</div>`).join('');
     list.appendChild(nc);
   }
-  const handover=getHandoverData(date);
   if(handover&&handover.confirmed){
     const hc=document.createElement('div');hc.className='detail-handover';
     hc.textContent=`✅ ${handover.staff} が ${handover.time} に引継ぎを確認しました`;
@@ -471,7 +567,7 @@ function openDetail(date){
   }
   recs.forEach(rec=>{
     const card=document.createElement('div');card.className='detail-card';
-    const tagsHtml=rec.checks.map(c=>`<span class="tag ${GOOD_SET.has(c)?'tag-good':'tag-bad'}">${c}</span>`).join('');
+    const tagsHtml=(rec.checks||[]).map(c=>`<span class="tag ${GOOD_SET.has(c)?'tag-good':'tag-bad'}">${c}</span>`).join('');
     const fieldsHtml=FIELDS.map(f=>{
       const logs=rec.logs&&rec.logs[f.key]||[];if(!logs.length)return'';
       const badge=(f.key==='parent'&&rec.contactDone)?'<span class="tag tag-done" style="margin-left:6px">📞連絡済</span>':'';
@@ -480,7 +576,6 @@ function openDetail(date){
     card.innerHTML=`<div class="detail-name">👦 ${escHtml(rec.childName)}</div><div class="tag-row" style="margin-bottom:6px">${tagsHtml}${rec.contactDone?'<span class="tag tag-done">📞済</span>':''}</div>${fieldsHtml||'<span style="color:#bbb;font-size:13px">記録なし</span>'}`;
     list.appendChild(card);
   });
-  showScreen('detail');
 }
 
 // ======== 月次まとめ ========
