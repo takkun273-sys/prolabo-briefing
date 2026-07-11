@@ -65,14 +65,26 @@
       <div class="notice-section">
         <div class="notice-section-label">📌 伝達事項</div>
         <div class="log-box" id="notice-log-msg"></div>
-        <textarea id="notice-input-msg" rows="2" placeholder="スタッフへの伝達事項を入力"></textarea>
+        <div class="textarea-row">
+          <textarea id="notice-input-msg" rows="2" placeholder="スタッフへの伝達事項を入力"></textarea>
+          <button class="mic-btn" title="音声入力"
+            onpointerdown="startMic(this,'notice-input-msg')"
+            onpointerup="stopMic()"
+            onpointerleave="stopMic()">🎤</button>
+        </div>
         <button class="append-btn" onclick="appendNotice('msg')">✏️ 追記する</button>
       </div>
       <!-- 来客予定 -->
       <div class="notice-section" style="margin-top:12px">
         <div class="notice-section-label">🚪 来客予定</div>
         <div class="log-box" id="notice-log-visitor"></div>
-        <textarea id="notice-input-visitor" rows="2" placeholder="来客・外部機関訪問の予定を入力"></textarea>
+        <div class="textarea-row">
+          <textarea id="notice-input-visitor" rows="2" placeholder="来客・外部機関訪問の予定を入力"></textarea>
+          <button class="mic-btn" title="音声入力"
+            onpointerdown="startMic(this,'notice-input-visitor')"
+            onpointerup="stopMic()"
+            onpointerleave="stopMic()">🎤</button>
+        </div>
         <button class="append-btn" onclick="appendNotice('visitor')">✏️ 追記する</button>
       </div>
     </div>

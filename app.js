@@ -1,3 +1,78 @@
+// ======== 音声入力 ========
+let recognition = null;
+let micActive = false;
+let currentMicBtn = null;
+let currentMicTarget = null;
+
+function initSpeech() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) return false;
+  recognition = new SpeechRecognition();
+  recognition.lang = 'ja-JP';
+  recognition.continuous = true;
+  recognition.interimResults = true;
+
+  recognition.onresult = (e) => {
+    let interim = '', final = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      e.results[i].isFinal ? final += t : interim += t;
+    }
+    if (currentMicTarget) {
+      const base = currentMicTarget.dataset.base || '';
+      currentMicTarget.value = base + final + interim;
+    }
+  };
+
+  recognition.onfinalresult = () => {};
+
+  recognition.onend = () => {
+    if (currentMicTarget) {
+      currentMicTarget.dataset.base = currentMicTarget.value;
+    }
+    if (micActive) recognition.start(); // 押し続け中は再開
+  };
+
+  recognition.onerror = (e) => {
+    if (e.error !== 'aborted') console.warn('音声認識エラー:', e.error);
+  };
+  return true;
+}
+
+function startMic(btn, targetId) {
+  if (!recognition && !initSpeech()) {
+    btn.insertAdjacentHTML('afterend', '<span class="mic-not-supported">このブラウザは音声入力非対応です</span>');
+    return;
+  }
+  const ta = document.getElementById(targetId);
+  if (!ta) return;
+
+  // 別のマイクが動いていたら停止
+  if (currentMicBtn && currentMicBtn !== btn) stopMic();
+
+  currentMicBtn = btn;
+  currentMicTarget = ta;
+  currentMicTarget.dataset.base = ta.value;
+  micActive = true;
+  btn.classList.add('recording');
+  btn.title = '録音中…離すと停止';
+  try { recognition.start(); } catch(e) {}
+}
+
+function stopMic() {
+  micActive = false;
+  if (recognition) { try { recognition.stop(); } catch(e) {} }
+  if (currentMicBtn) {
+    currentMicBtn.classList.remove('recording');
+    currentMicBtn.title = '音声入力';
+  }
+  if (currentMicTarget) {
+    currentMicTarget.dataset.base = '';
+  }
+  currentMicBtn = null;
+  currentMicTarget = null;
+}
+
 // ======== GAS連携設定 ========
 // デプロイ後にここを書き換えてください
 const GAS_URL = 'ここにGASのデプロイURLを貼り付け';
@@ -260,7 +335,13 @@ function buildCard(rec,idx){
         <div class="field-body" id="fbody-${f.key}-${idx}">
           ${presetHtml}
           <div class="log-box" id="log-${f.key}-${idx}">${renderLog(logs)}</div>
-          <textarea id="input-${f.key}-${idx}" rows="2" placeholder="${f.ph}" style="margin-top:6px"></textarea>
+          <div class="textarea-row">
+            <textarea id="input-${f.key}-${idx}" rows="2" placeholder="${f.ph}"></textarea>
+            <button class="mic-btn" id="mic-${f.key}-${idx}" title="音声入力"
+              onpointerdown="startMic(this,'input-${f.key}-${idx}')"
+              onpointerup="stopMic()"
+              onpointerleave="stopMic()">🎤</button>
+          </div>
           <button class="append-btn" onclick="appendLog(${idx},'${f.key}')">✏️ 追記する</button>
           ${doneBtn}
         </div>

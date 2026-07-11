@@ -165,6 +165,28 @@ textarea { width: 100%; border: 1.5px solid #e0e0e0; border-radius: 8px; padding
 .monthly-selector select { padding: 7px 10px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 14px; font-family: 'Noto Sans JP', sans-serif; outline: none; }
 .monthly-selector button { padding: 7px 16px; background: #9b59b6; color: #fff; border: none; border-radius: 8px; font-size: 13px; cursor: pointer; font-family: 'Noto Sans JP', sans-serif; font-weight: 600; }
 
+/* ======== 音声入力 ======== */
+.mic-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; border-radius: 50%; border: none;
+  background: #e8f4fd; color: #2980b9; cursor: pointer;
+  font-size: 17px; margin-left: 6px; vertical-align: middle;
+  transition: all 0.15s; flex-shrink: 0;
+}
+.mic-btn:active, .mic-btn.recording {
+  background: #e74c3c; color: #fff;
+  box-shadow: 0 0 0 4px rgba(231,76,60,0.25);
+  animation: mic-pulse 1s infinite;
+}
+@keyframes mic-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(231,76,60,0.4); }
+  70%  { box-shadow: 0 0 0 8px rgba(231,76,60,0); }
+  100% { box-shadow: 0 0 0 0 rgba(231,76,60,0); }
+}
+.mic-not-supported { font-size: 11px; color: #e74c3c; margin-top: 4px; }
+.textarea-row { display: flex; align-items: flex-start; gap: 4px; margin-top: 6px; }
+.textarea-row textarea { flex: 1; }
+
 /* ======== ユーティリティ ======== */
 .hidden { display: none !important; }
 
