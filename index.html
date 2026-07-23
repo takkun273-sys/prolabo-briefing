@@ -67,10 +67,8 @@
         <div class="log-box" id="notice-log-msg"></div>
         <div class="textarea-row">
           <textarea id="notice-input-msg" rows="2" placeholder="スタッフへの伝達事項を入力"></textarea>
-          <button class="mic-btn" title="音声入力"
-            onpointerdown="startMic(this,'notice-input-msg')"
-            onpointerup="stopMic()"
-            onpointerleave="stopMic()">🎤</button>
+          <button class="mic-btn" title="音声入力（押してON／もう一度押してOFF）"
+            onclick="toggleMic(this,'notice-input-msg')">🎤</button>
         </div>
         <button class="append-btn" onclick="appendNotice('msg')">✏️ 追記する</button>
       </div>
@@ -80,10 +78,8 @@
         <div class="log-box" id="notice-log-visitor"></div>
         <div class="textarea-row">
           <textarea id="notice-input-visitor" rows="2" placeholder="来客・外部機関訪問の予定を入力"></textarea>
-          <button class="mic-btn" title="音声入力"
-            onpointerdown="startMic(this,'notice-input-visitor')"
-            onpointerup="stopMic()"
-            onpointerleave="stopMic()">🎤</button>
+          <button class="mic-btn" title="音声入力（押してON／もう一度押してOFF）"
+            onclick="toggleMic(this,'notice-input-visitor')">🎤</button>
         </div>
         <button class="append-btn" onclick="appendNotice('visitor')">✏️ 追記する</button>
       </div>

@@ -21,42 +21,51 @@ function initSpeech() {
     if (currentMicTarget) {
       const base = currentMicTarget.dataset.base || '';
       currentMicTarget.value = base + final + interim;
+      if (final) currentMicTarget.dataset.base = base + final;
     }
   };
 
-  recognition.onfinalresult = () => {};
-
   recognition.onend = () => {
-    if (currentMicTarget) {
-      currentMicTarget.dataset.base = currentMicTarget.value;
+    // 録音中フラグが立っていれば自動再開（ブラウザが途中で止めることがあるため）
+    if (micActive) {
+      try { recognition.start(); } catch(e) {}
     }
-    if (micActive) recognition.start(); // 押し続け中は再開
   };
 
   recognition.onerror = (e) => {
-    if (e.error !== 'aborted') console.warn('音声認識エラー:', e.error);
+    if (e.error === 'not-allowed') {
+      alert('マイクへのアクセスが拒否されました。\nブラウザの設定でマイクを許可してください。');
+      stopMic();
+    } else if (e.error !== 'aborted') {
+      console.warn('音声認識エラー:', e.error);
+    }
   };
   return true;
 }
 
-function startMic(btn, targetId) {
-  if (!recognition && !initSpeech()) {
-    btn.insertAdjacentHTML('afterend', '<span class="mic-not-supported">このブラウザは音声入力非対応です</span>');
-    return;
-  }
-  const ta = document.getElementById(targetId);
-  if (!ta) return;
-
-  // 別のマイクが動いていたら停止
+function toggleMic(btn, targetId) {
+  // 別のマイクが動いていたら先に止める
   if (currentMicBtn && currentMicBtn !== btn) stopMic();
 
-  currentMicBtn = btn;
-  currentMicTarget = ta;
-  currentMicTarget.dataset.base = ta.value;
-  micActive = true;
-  btn.classList.add('recording');
-  btn.title = '録音中…離すと停止';
-  try { recognition.start(); } catch(e) {}
+  if (micActive && currentMicBtn === btn) {
+    // 同じボタンを押したら停止
+    stopMic();
+  } else {
+    // 新たに開始
+    if (!recognition && !initSpeech()) {
+      btn.insertAdjacentHTML('afterend','<span class="mic-not-supported">このブラウザは音声入力非対応です</span>');
+      return;
+    }
+    const ta = document.getElementById(targetId);
+    if (!ta) return;
+    currentMicBtn = btn;
+    currentMicTarget = ta;
+    currentMicTarget.dataset.base = ta.value;
+    micActive = true;
+    btn.classList.add('recording');
+    btn.title = '録音中…もう一度押すと停止';
+    try { recognition.start(); } catch(e) {}
+  }
 }
 
 function stopMic() {
@@ -64,11 +73,9 @@ function stopMic() {
   if (recognition) { try { recognition.stop(); } catch(e) {} }
   if (currentMicBtn) {
     currentMicBtn.classList.remove('recording');
-    currentMicBtn.title = '音声入力';
+    currentMicBtn.title = '音声入力（押してON／もう一度押してOFF）';
   }
-  if (currentMicTarget) {
-    currentMicTarget.dataset.base = '';
-  }
+  if (currentMicTarget) currentMicTarget.dataset.base = '';
   currentMicBtn = null;
   currentMicTarget = null;
 }
@@ -98,9 +105,16 @@ function isGasReady() {
 const DAYS = ["月","火","水","木","金","土"];
 const DAY_COLORS = {"月":"#3498db","火":"#e67e22","水":"#27ae60","木":"#9b59b6","金":"#e74c3c","土":"#1abc9c"};
 const DEFAULT_STAFF = [
-  {name:"佐伯",password:"1111",isAdmin:true},
-  {name:"田中",password:"2222",isAdmin:false},
-  {name:"山本",password:"3333",isAdmin:false},
+  {name:"佐伯",  password:"1111", isAdmin:true},
+  {name:"田中",  password:"2222", isAdmin:false},
+  {name:"山本",  password:"3333", isAdmin:false},
+  {name:"鈴木",  password:"4444", isAdmin:false},
+  {name:"伊藤",  password:"5555", isAdmin:false},
+  {name:"渡辺",  password:"6666", isAdmin:false},
+  {name:"中村",  password:"7777", isAdmin:false},
+  {name:"小林",  password:"8888", isAdmin:false},
+  {name:"加藤",  password:"9999", isAdmin:false},
+  {name:"吉田",  password:"0000", isAdmin:false},
 ];
 const DEFAULT_CHILDREN = {
   "月":["山田 太郎","鈴木 花子","中村 健太"],
@@ -337,10 +351,8 @@ function buildCard(rec,idx){
           <div class="log-box" id="log-${f.key}-${idx}">${renderLog(logs)}</div>
           <div class="textarea-row">
             <textarea id="input-${f.key}-${idx}" rows="2" placeholder="${f.ph}"></textarea>
-            <button class="mic-btn" id="mic-${f.key}-${idx}" title="音声入力"
-              onpointerdown="startMic(this,'input-${f.key}-${idx}')"
-              onpointerup="stopMic()"
-              onpointerleave="stopMic()">🎤</button>
+            <button class="mic-btn" id="mic-${f.key}-${idx}" title="音声入力（押してON／もう一度押してOFF）"
+              onclick="toggleMic(this,'input-${f.key}-${idx}')">🎤</button>
           </div>
           <button class="append-btn" onclick="appendLog(${idx},'${f.key}')">✏️ 追記する</button>
           ${doneBtn}
