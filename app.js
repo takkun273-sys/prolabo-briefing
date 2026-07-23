@@ -3,30 +3,36 @@ let recognition = null;
 let micActive = false;
 let currentMicBtn = null;
 let currentMicTarget = null;
+let accumulatedText = ''; // 確定済みテキストを蓄積
 
 function initSpeech() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) return false;
   recognition = new SpeechRecognition();
   recognition.lang = 'ja-JP';
-  recognition.continuous = true;
+  recognition.continuous = false;   // Android対応：falseにして手動再起動
   recognition.interimResults = true;
 
   recognition.onresult = (e) => {
-    let interim = '', final = '';
+    let interim = '';
+    let finalChunk = '';
     for (let i = e.resultIndex; i < e.results.length; i++) {
       const t = e.results[i][0].transcript;
-      e.results[i].isFinal ? final += t : interim += t;
+      if (e.results[i].isFinal) {
+        finalChunk += t;
+      } else {
+        interim += t;
+      }
     }
+    if (finalChunk) accumulatedText += finalChunk;
     if (currentMicTarget) {
       const base = currentMicTarget.dataset.base || '';
-      currentMicTarget.value = base + final + interim;
-      if (final) currentMicTarget.dataset.base = base + final;
+      currentMicTarget.value = base + accumulatedText + interim;
     }
   };
 
   recognition.onend = () => {
-    // 録音中フラグが立っていれば自動再開（ブラウザが途中で止めることがあるため）
+    // 録音中なら自動再起動（Android Chromeは都度終了するため）
     if (micActive) {
       try { recognition.start(); } catch(e) {}
     }
@@ -36,6 +42,9 @@ function initSpeech() {
     if (e.error === 'not-allowed') {
       alert('マイクへのアクセスが拒否されました。\nブラウザの設定でマイクを許可してください。');
       stopMic();
+    } else if (e.error === 'no-speech') {
+      // 無音タイムアウト → 自動再起動
+      if (micActive) { try { recognition.start(); } catch(err) {} }
     } else if (e.error !== 'aborted') {
       console.warn('音声認識エラー:', e.error);
     }
@@ -44,14 +53,11 @@ function initSpeech() {
 }
 
 function toggleMic(btn, targetId) {
-  // 別のマイクが動いていたら先に止める
   if (currentMicBtn && currentMicBtn !== btn) stopMic();
 
   if (micActive && currentMicBtn === btn) {
-    // 同じボタンを押したら停止
     stopMic();
   } else {
-    // 新たに開始
     if (!recognition && !initSpeech()) {
       btn.insertAdjacentHTML('afterend','<span class="mic-not-supported">このブラウザは音声入力非対応です</span>');
       return;
@@ -61,6 +67,7 @@ function toggleMic(btn, targetId) {
     currentMicBtn = btn;
     currentMicTarget = ta;
     currentMicTarget.dataset.base = ta.value;
+    accumulatedText = ''; // リセット
     micActive = true;
     btn.classList.add('recording');
     btn.title = '録音中…もう一度押すと停止';
@@ -76,6 +83,7 @@ function stopMic() {
     currentMicBtn.title = '音声入力（押してON／もう一度押してOFF）';
   }
   if (currentMicTarget) currentMicTarget.dataset.base = '';
+  accumulatedText = '';
   currentMicBtn = null;
   currentMicTarget = null;
 }
